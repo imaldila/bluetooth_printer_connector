@@ -14,6 +14,7 @@
 #include <ws2bth.h>
 
 #pragma comment(lib, "Bthprops.lib")
+#pragma comment(lib, "Ws2_32.lib")
 
 namespace {
 
@@ -167,8 +168,9 @@ bool BluetoothPrinterConnectorPlugin::WriteToPrinter(const std::vector<uint8_t>&
     return false;
   }
 
-  int bytes_sent = send(socket_, (char*)data.data(), data.size(), 0);
-  return bytes_sent == data.size();
+  int data_size = static_cast<int>(data.size());
+  int bytes_sent = send(socket_, (char*)data.data(), data_size, 0);
+  return bytes_sent == data_size;
 }
 
 void BluetoothPrinterConnectorPlugin::HandleMethodCall(
@@ -236,6 +238,20 @@ void BluetoothPrinterConnectorPlugin::HandleMethodCall(
 }
 
 }  // namespace
+
+// The generated plugin registrant goes through the C API shim
+// (bluetooth_printer_connector_plugin_c_api.cpp), which calls the class
+// declared in the header's bluetooth_printer_connector namespace. The
+// implementation above lives in an anonymous namespace, so forward to it —
+// without this the namespaced symbol is undefined and the app fails to link.
+namespace bluetooth_printer_connector {
+
+void BluetoothPrinterConnectorPlugin::RegisterWithRegistrar(
+    flutter::PluginRegistrarWindows *registrar) {
+  ::BluetoothPrinterConnectorPlugin::RegisterWithRegistrar(registrar);
+}
+
+}  // namespace bluetooth_printer_connector
 
 void BluetoothPrinterConnectorPluginRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar) {
